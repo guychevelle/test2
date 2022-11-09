@@ -1,0 +1,29 @@
+{
+  "version": 2,
+  "resourceName": "RESOURCEAuth",
+  "serviceConfiguration": {
+    "serviceName": "Cognito",
+    "userPoolConfiguration": {
+      "userPoolName": "RESOURCEpool",
+      "requiredSignupAttributes": ["EMAIL", "NAME"],
+      "signinMethod": "USERNAME",
+      "passwordPolicy": {
+        "minimumlength": 8,
+        "additionalConstraints": ["REQUIRE_UPPERCASE", "REQUIRE_DIGIT"]
+      },
+      "readAttributes": ["EMAIL", "NAME", "PICTURE"],
+      "writeAttributes": ["EMAIL", "NAME", "PICTURE"],
+      "autoVerifiedAttributes": [
+        {
+          "type": "EMAIL",
+          "verificationMessage": "Your verification code is {####}",
+          "verificationSubject": "Your verification code"
+        }
+      ]
+    },
+    "includeIdentityPool": true,
+    "identityPoolConfiguration": {
+      "unauthenticatedLogin": true
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "resourceName": "test2",
+  "bucketName": "test2-bucket",
+  "policyUUID": "87cd3d3b",
+  "storageAccess": "authAndGuest",
+  "guestAccess": [
+    "READ"
+  ],
+  "authAccess": [
+    "CREATE_AND_UPDATE",
+    "READ",
+    "DELETE"
+  ]
+}

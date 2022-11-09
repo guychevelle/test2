@@ -1,5 +1,9 @@
-.App {
-  text-align: center;
+
+.codediv {
+  display: flex;
+  position: relative;
+  height: 200px;
+  width: 300px;
 }
 
 .App-logo {

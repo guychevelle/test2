@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "api": {
+      "test2db": [
+        "Query",
+        "Mutation",
+        "Subscription"
+      ]
+    }
+  },
+  "lambdaLayers": []
+}

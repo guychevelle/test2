@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "serviceConfiguration": {
+    "serviceName": "S3",
+    "resourceName": "RESOURCE",
+    "bucketName": "BUCKET",
+    "permissions": {
+      "auth": [ 
+               "CREATE_AND_UPDATE",
+               "READ",
+               "DELETE"
+              ],
+      "guest": ["READ"]
+    }
+  }
+}

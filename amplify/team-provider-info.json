@@ -10,6 +10,18 @@
       "StackName": "amplify-test2-test-151131",
       "StackId": "arn:aws:cloudformation:us-east-1:159429861638:stack/amplify-test2-test-151131/7b730400-570d-11ed-b4a8-0ec8165aaba7",
       "AmplifyAppId": "d3pun23ya70gid"
+    },
+    "categories": {
+      "auth": {
+        "true": {},
+        "test2Auth": {}
+      },
+      "function": {
+        "test2function": {
+          "deploymentBucketName": "amplify-test2-test-151131-deployment",
+          "s3Key": "amplify-builds/test2function-45515834524c6c434f6e-build.zip"
+        }
+      }
     }
   }
 }

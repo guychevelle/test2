@@ -1,0 +1,8 @@
+
+type Todo @model @auth(rules: [{allow: private},
+                               {allow: public, operations: [read],
+                                provider: iam}]) {
+  name: String!
+  description: String
+}
+
