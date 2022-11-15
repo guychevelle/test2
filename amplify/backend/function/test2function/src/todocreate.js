@@ -35,8 +35,8 @@ export const handler = async (event) => {
 
   const variables = {
     input: {
-      name: 'Hello, Todo!',
-      description: 'Created from a Lambda!!'
+      name: event.name,
+      description: event.description
     }
   };
 

@@ -64,6 +64,20 @@
           ]
         }
       }
+    },
+    "todoApi": {
+      "service": "API Gateway",
+      "providerPlugin": "awscloudformation",
+      "dependsOn": [
+        {
+          "category": "function",
+          "resourceName": "test2function",
+          "attributes": [
+            "Name",
+            "Arn"
+          ]
+        }
+      ]
     }
   },
   "function": {

@@ -20,6 +20,11 @@ export type AmplifyDependentResourcesAttributes = {
         "test2db": {
             "GraphQLAPIIdOutput": "string",
             "GraphQLAPIEndpointOutput": "string"
+        },
+        "todoApi": {
+            "RootUrl": "string",
+            "ApiName": "string",
+            "ApiId": "string"
         }
     },
     "function": {

@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "paths": {
+    "/items": {
+      "name": "/items",
+      "lambdaFunction": "test2function",
+      "permissions": {
+        "setting": "protected",
+        "auth": [
+          "create",
+          "read",
+          "update",
+          "delete"
+        ],
+        "guest": [
+          "create",
+          "read",
+          "update"
+        ]
+      }
+    }
+  }
+}

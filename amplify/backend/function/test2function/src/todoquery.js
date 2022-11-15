@@ -31,6 +31,12 @@ const query = /* GraphQL */ `
 export const handler = async (event) => {
   console.log(`EVENT: ${JSON.stringify(event)}`);
 
+  // from https://medium.com/rahasak/build-serverless-application-with-aws-amplify-aws-api-gateway-aws-lambda-and-cognito-auth-a8606b9cb025 
+  // Step 9, enable CORS
+  if (event.requestContext.authorizer) {
+    console.log('CLAIMS: ', event.requestContext.authorizer.claims);
+  }
+
   const endpoint = new URL(GRAPHQL_ENDPOINT);
 
   const signer = new SignatureV4({
@@ -75,6 +81,10 @@ export const handler = async (event) => {
 
   return {
     statusCode,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Headers": "*"
+    },
     body: JSON.stringify(body)
   };
 };

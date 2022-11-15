@@ -11,9 +11,20 @@ const { Sha256 } = crypto;
 const GRAPHQL_ENDPOINT = process.env.API_TEST2DB_GRAPHQLAPIENDPOINTOUTPUT;
 const AWS_REGION = process.env.AWS_REGION || 'us-east-1';
 
+//const query = /* GraphQL */ `
+//  mutation UPDATE_TODO($input: UpdateTodoInput!) {
+//    updateTodo(input: $input) {
+//      id
+//      _version
+//      name
+//      description
+//    }
+//  }
+//`;
+
 const query = /* GraphQL */ `
-  query LIST_TODOS {
-    listTodos {
+  query LIST_TODOS($filter: ModelTodoFilterInput!) {
+    listTodos (filter: $filter) {
       items {
         id
         name
@@ -31,12 +42,6 @@ const query = /* GraphQL */ `
 export const handler = async (event) => {
   console.log(`EVENT: ${JSON.stringify(event)}`);
 
-  // from https://medium.com/rahasak/build-serverless-application-with-aws-amplify-aws-api-gateway-aws-lambda-and-cognito-auth-a8606b9cb025 
-  // Step 9, enable CORS
-  if (event.requestContext.authorizer) {
-    console.log('CLAIMS: ', event.requestContext.authorizer.claims);
-  }
-
   const endpoint = new URL(GRAPHQL_ENDPOINT);
 
   const signer = new SignatureV4({
@@ -46,6 +51,20 @@ export const handler = async (event) => {
     sha256: Sha256
   });
 
+  let filter = {
+    _version: {
+      gt: 2
+    }
+  };
+
+  const variables = {
+    filter: {
+      _version: {
+        gt: 2
+      }
+    }
+  };
+
   const requestToBeSigned = new HttpRequest({
     method: 'POST',
     headers: {
@@ -53,7 +72,7 @@ export const handler = async (event) => {
       host: endpoint.host
     },
     hostname: endpoint.host,
-    body: JSON.stringify({ query }),
+    body: JSON.stringify({ query, variables }),
     path: endpoint.pathname
   });
 
@@ -81,10 +100,6 @@ export const handler = async (event) => {
 
   return {
     statusCode,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Headers": "*"
-    },
     body: JSON.stringify(body)
   };
 };
