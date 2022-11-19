@@ -25,63 +25,18 @@ function App() {
                                        download: true
                                       });
     result.Body.text().then(data => {
-      console.log('file content', data);
       updatefunc(data);
     });
   }
 
-  function callLambda () {
-    const apiname = "todoApi";
-    const path = "/items";
-    const myinit = {
-      headers: {},  // optional
-      response: true,  // optional
-      querystringparameters: {
-        name: 'param'  // optional
-      }
-    };
-
-    API.get(apiname, path, myinit)
-       .then((response) => {
-     console.log('api.get response', response);
-     })
-       .catch((error) => {
-     console.log('api.get error', error);
-     });
-  }
-
-
   if (!publiccode)
     getCode('public', 'index.js', updatePublicCode);
-  else
-    console.log('publiccode', publiccode);
-
-/*
-  Auth.currentCredentials()
-    .then(credentials => {
-      const lambda = new Lambda({
-        credentials: Auth.essentialCredentials(credentials)
-      });
-      console.log('inside auth.currentcredentials');
-      return lambda.invoke({
-        FunctionName: 'test2function-test',
-        Payload: JSON.stringify({ hello: 'world' }),
-      });
-    });
-*/
-
-/*
-  if (!privatecode)
-    getCode('protected', 'App.js', updatePrivateCode);
-  else
-    console.log('privatecode', privatecode);
-*/
 
 /*
 invoke url from api gateway configuration:
 https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
 */
-  async function callApi() {
+  async function getApi() {
     const user = await Auth.currentAuthenticatedUser()
     const token = user.signInUserSession.idToken.jwtToken
     console.log("token: ", token)
@@ -91,14 +46,104 @@ https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
     const requestData = {
         headers: {
             Authorization: token
+        },
+        response: true,
+        queryStringParameters: {
+          name: 'click data',
+          description: 'create rest request to lambda'
         }
     }
     const data = await API.get('todoApi', '/items', requestData)
-    console.log("data: ", data)
+                       .then((response) => {
+                         console.log('api.get response', response);
+                       })
+                       .catch((error) => {
+                         console.log('api.get error', error.response);
+                       })
   }
 
-//  Auth.configure(awsconfig);
+  async function createApi(event) {
+    //  prevent page from refreshing
+    event.preventDefault();
+    const user = await Auth.currentAuthenticatedUser()
+    const token = user.signInUserSession.idToken.jwtToken
+    console.log("token: ", token)
 
+    console.log('user', user);
+
+    const requestData = {
+        headers: {
+            Authorization: token
+        },
+        body: {
+          name: event.target[0].value,
+          description: event.target[1].value
+        }
+    }
+    const data = await API.post('todoApi', '/items', requestData)
+                       .then((response) => {
+                         console.log('api.post response', response);
+                       })
+                       .catch((error) => {
+                         console.log('api.post error', error.response);
+                       })
+  }
+
+  async function updateApi(event) {
+    //  prevent page from refreshing
+    event.preventDefault();
+    console.log('update id', event.target[0].value);
+    console.log('update version', event.target[1].value);
+    const user = await Auth.currentAuthenticatedUser()
+    const token = user.signInUserSession.idToken.jwtToken
+
+    const requestData = {
+        headers: {
+            Authorization: token
+        },
+        body: {
+          id: event.target[0].value,
+          version: event.target[1].value,
+          name: event.target[2].value,
+          description: event.target[3].value
+        }
+    }
+
+    const data = await API.put('todoApi', '/items', requestData)
+                       .then((response) => {
+                         console.log('api.put response', response);
+                       })
+                       .catch((error) => {
+                         console.log('api.put error', error.response);
+                       })
+  }
+
+  async function deleteApi(event) {
+    //  prevent page from refreshing
+    event.preventDefault();
+    console.log('delete id', event.target[0].value);
+    console.log('delete version', event.target[1].value);
+    const user = await Auth.currentAuthenticatedUser()
+    const token = user.signInUserSession.idToken.jwtToken
+
+    const requestData = {
+        headers: {
+            Authorization: token
+        },
+        body: {
+          id: event.target[0].value,
+          version: event.target[1].value
+        }
+    }
+
+    const data = await API.del('todoApi', '/items', requestData)
+                       .then((response) => {
+                         console.log('api.del response', response);
+                       })
+                       .catch((error) => {
+                         console.log('api.del error', error.response);
+                       })
+  }
 
   return (
     <div className="App">
@@ -115,9 +160,69 @@ https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
       <div>
         <button onClick={logOut}>Log Out</button>
       </div>
+      <p />
       <div>
-        <button onClick={callApi}>Call Lambda</button>
+        <button onClick={getApi}>Query ToDo</button>
       </div>
+      <p />
+      <div>
+        <hr />
+        <form onSubmit={createApi}>
+          <label>Name:
+            <input type="text" name="name" />
+          </label>
+          <br />
+          <label>Description:
+            <input type="text" name="description" size="50" />
+          </label>
+          <br />
+          <input type="submit" value="Create ToDo" />
+        </form>
+        <hr />
+      </div>
+      <p />
+      <div>
+        <hr />
+        <form onSubmit={updateApi}>
+          <label>
+            Item Id:
+            <input type="text" name="id" size="75" />
+          </label>
+          <br />
+          <label>Item Version:
+            <input type="number" name="version" />
+          </label>
+          <br />
+          <label>New Name:
+            <input type="text" name="newname" />
+          </label>
+          <br />
+          <label>New Description:
+            <input type="text" name="newdesc" size="50" />
+          </label>
+          <br />
+          <input type="submit" value="Update ToDo" />
+        </form>
+        <hr />
+      </div>
+      <p />
+      <div>
+        <hr />
+        <form onSubmit={deleteApi}>
+          <label>
+            Item Id:
+            <input type="text" name="id" size="75" />
+          </label>
+          <br />
+          <label>Item Version:
+            <input type="number" name="version" />
+          </label>
+          <br />
+          <input type="submit" value="Delete ToDo" />
+        </form>
+        <hr />
+      </div>
+      <p />
       public file<p />
       {publiccode}
       <p />
