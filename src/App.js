@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Authenticator } from '@aws-amplify/ui-react';
-import { Auth } from 'aws-amplify';
+import { Auth, Hub } from 'aws-amplify';
 import { Lambda } from 'aws-sdk/clients/lambda';
 import './App.css';
 
@@ -13,6 +13,45 @@ function App() {
 
   const [publiccode, updatePublicCode] = useState(null);
   const [privatecode, updatePrivateCode] = useState(null);
+  const [todotable, updateToDoTable] = useState(null);
+  const [createmessage, updateCreateMessage] = useState(null);
+  const [updatemessage, updateUpdateMessage] = useState(null);
+  const [deletemessage, updateDeleteMessage] = useState(null);
+  const [user, updateUser] = useState(null);
+  const [authactioncount, updateAuthActionCount] = useState(0);
+
+  useEffect(() => {
+    checkUser();
+    setAuthListener();
+  }, [authactioncount]);
+
+  async function checkUser() {
+    const usr = await Auth.currentAuthenticatedUser()
+                .then((response) => {
+                  updateUser(response);
+                })
+                .catch((error) => {
+                  console.log('current user error', error);
+                  updateUser(null);
+                });
+  }
+
+  async function setAuthListener() {
+    Hub.listen('auth', (data) => {
+      switch (data.payload.event) {
+        case 'signIn':
+          updateUser(data.payload.data);
+          updateAuthActionCount(authactioncount+1);
+          break;
+        case 'signOut':
+          updateUser(null);
+          updateAuthActionCount(authactioncount+1);
+          break;
+        default:
+          break;
+      }
+    });
+  }
 
   function logOut () {
     Auth.signOut();
@@ -29,23 +68,51 @@ function App() {
     });
   }
 
-  if (!publiccode)
-    getCode('public', 'index.js', updatePublicCode);
+
+  function buildTable(items) {
+    updateToDoTable(
+      <table>
+        <thead>
+          <tr>
+            <th>id</th>
+            <th>_version</th>
+            <th>name</th>
+            <th>description</th>
+            <th>_deleted</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item, i) => {
+            return (
+              <tr key={i}>
+                <td>{item.id}</td>
+                <td>{item._version}</td>
+                <td>{item.name}</td>
+                <td>{item.description}</td>
+                <td>{item._deleted ? 'true' : 'false'}</td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+    ); 
+  }
 
 /*
 invoke url from api gateway configuration:
 https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
 */
   async function getApi() {
-    const user = await Auth.currentAuthenticatedUser()
-    const token = user.signInUserSession.idToken.jwtToken
-    console.log("token: ", token)
+    if (!user) {
+      updateToDoTable('Must be signed in to query');
+      return;
+    }
 
-    console.log('user', user);
+    updateToDoTable(null);
 
     const requestData = {
         headers: {
-            Authorization: token
+            Authorization: user.signInUserSession.idToken.jwtToken
         },
         response: true,
         queryStringParameters: {
@@ -55,25 +122,24 @@ https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
     }
     const data = await API.get('todoApi', '/items', requestData)
                        .then((response) => {
-                         console.log('api.get response', response);
+                         buildTable(response.data.data.listTodos.items);
                        })
                        .catch((error) => {
-                         console.log('api.get error', error.response);
+                         console.log('api.get error', error);
                        })
   }
 
   async function createApi(event) {
     //  prevent page from refreshing
     event.preventDefault();
-    const user = await Auth.currentAuthenticatedUser()
-    const token = user.signInUserSession.idToken.jwtToken
-    console.log("token: ", token)
-
-    console.log('user', user);
+    if (!user) {
+      updateCreateMessage('Must be logged in to Create');
+      return;
+    }
 
     const requestData = {
         headers: {
-            Authorization: token
+            Authorization: user.signInUserSession.idToken.jwtToken
         },
         body: {
           name: event.target[0].value,
@@ -83,23 +149,27 @@ https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
     const data = await API.post('todoApi', '/items', requestData)
                        .then((response) => {
                          console.log('api.post response', response);
+                         updateCreateMessage('Created id: ' + response.data.createTodo.id);
                        })
                        .catch((error) => {
                          console.log('api.post error', error.response);
+                         updateCreateMessage('Creation error: ' + error.response);
                        })
   }
 
   async function updateApi(event) {
     //  prevent page from refreshing
     event.preventDefault();
+    if (!user) {
+      updateUpdateMessage('Must be logged in to update items');
+      return;
+    }
     console.log('update id', event.target[0].value);
     console.log('update version', event.target[1].value);
-    const user = await Auth.currentAuthenticatedUser()
-    const token = user.signInUserSession.idToken.jwtToken
 
     const requestData = {
         headers: {
-            Authorization: token
+            Authorization: user.signInUserSession.idToken.jwtToken
         },
         body: {
           id: event.target[0].value,
@@ -112,6 +182,7 @@ https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
     const data = await API.put('todoApi', '/items', requestData)
                        .then((response) => {
                          console.log('api.put response', response);
+                         updateUpdateMessage('Updated item to version ' + response.data.updateTodo._version);
                        })
                        .catch((error) => {
                          console.log('api.put error', error.response);
@@ -121,14 +192,16 @@ https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
   async function deleteApi(event) {
     //  prevent page from refreshing
     event.preventDefault();
+    if (!user) {
+      updateDeleteMessage('Must be logged in to delete items');
+      return;
+    }
     console.log('delete id', event.target[0].value);
     console.log('delete version', event.target[1].value);
-    const user = await Auth.currentAuthenticatedUser()
-    const token = user.signInUserSession.idToken.jwtToken
 
     const requestData = {
         headers: {
-            Authorization: token
+            Authorization: user.signInUserSession.idToken.jwtToken
         },
         body: {
           id: event.target[0].value,
@@ -139,11 +212,16 @@ https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
     const data = await API.del('todoApi', '/items', requestData)
                        .then((response) => {
                          console.log('api.del response', response);
+                         updateDeleteMessage('Deleted item as version ' + response.data.deleteTodo._version);
                        })
                        .catch((error) => {
                          console.log('api.del error', error.response);
+                         updateDeleteMessage('Error deleting: ' + error.response.data.errors[0].message);
                        })
   }
+
+  if (!publiccode)
+    getCode('public', 'index.js', updatePublicCode);
 
   return (
     <div className="App">
@@ -163,6 +241,10 @@ https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
       <p />
       <div>
         <button onClick={getApi}>Query ToDo</button>
+        <p />
+        {todotable ? todotable
+                   : 'No data available'
+        }
       </div>
       <p />
       <div>
@@ -178,6 +260,8 @@ https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
           <br />
           <input type="submit" value="Create ToDo" />
         </form>
+        <p />
+        {createmessage}
         <hr />
       </div>
       <p />
@@ -203,6 +287,8 @@ https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
           <br />
           <input type="submit" value="Update ToDo" />
         </form>
+        <p />
+        {updatemessage}
         <hr />
       </div>
       <p />
@@ -220,6 +306,8 @@ https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
           <br />
           <input type="submit" value="Delete ToDo" />
         </form>
+        <p />
+        {deletemessage}
         <hr />
       </div>
       <p />
