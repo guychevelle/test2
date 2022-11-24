@@ -11,6 +11,14 @@
         "minimumlength": 8,
         "additionalConstraints": ["REQUIRE_UPPERCASE", "REQUIRE_DIGIT"]
       },
+      "userPoolGroups": [
+        {
+          "groupName": "authors"
+        },
+        {
+          "groupName": "admins"
+        }
+      ],
       "readAttributes": ["EMAIL", "NAME", "PICTURE"],
       "writeAttributes": ["EMAIL", "NAME", "PICTURE"],
       "autoVerifiedAttributes": [

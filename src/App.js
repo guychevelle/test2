@@ -47,6 +47,10 @@ function App() {
           updateUser(null);
           updateAuthActionCount(authactioncount+1);
           break;
+        case 'sessionExpired':
+          updateUser(null);
+          updateAuthActionCount(authactioncount+1);
+          break;
         default:
           break;
       }
@@ -108,6 +112,8 @@ https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
       return;
     }
 
+    console.log('user', user);
+
     updateToDoTable(null);
 
     const requestData = {
@@ -126,6 +132,7 @@ https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
                        })
                        .catch((error) => {
                          console.log('api.get error', error);
+                         updateToDoTable('Error with query: ' + error.response.data.errors[0].message);
                        })
   }
 
@@ -153,7 +160,7 @@ https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
                        })
                        .catch((error) => {
                          console.log('api.post error', error.response);
-                         updateCreateMessage('Creation error: ' + error.response);
+                         updateCreateMessage('Error creating: ' + error.response.data.errors[0].message);
                        })
   }
 
@@ -186,6 +193,7 @@ https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
                        })
                        .catch((error) => {
                          console.log('api.put error', error.response);
+                         updateUpdateMessage('Error updating: ' + error.response.data.errors[0].message);
                        })
   }
 
