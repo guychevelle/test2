@@ -15,12 +15,13 @@
     "categories": {
       "auth": {
         "true": {},
-        "test2Auth": {}
+        "test2Auth": {},
+        "userPoolGroups": {}
       },
       "function": {
         "test2function": {
           "deploymentBucketName": "amplify-test2-test-151131-deployment",
-          "s3Key": "amplify-builds/test2function-4368374e7a4372396c46-build.zip"
+          "s3Key": "amplify-builds/test2function-78567654423776336a70-build.zip"
         }
       }
     }

@@ -1,5 +1,8 @@
 
-type Todo @model @auth(rules: [{allow: private},
+type Todo @model @auth(rules: [{allow: groups, groups: [\\"authors\\"],
+                                       operations: [read, create, update]},
+                               {allow: groups, groups: [\\"admins\\"],
+                                       operations: [read, create, update, delete]},
                                {allow: public, operations: [read],
                                 provider: iam}]) {
   name: String!

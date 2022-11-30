@@ -1,5 +1,21 @@
 {
   "auth": {
+    "userPoolGroups": {
+      "service": "Cognito-UserPool-Groups",
+      "providerPlugin": "awscloudformation",
+      "dependsOn": [
+        {
+          "category": "auth",
+          "resourceName": "test2Auth",
+          "attributes": [
+            "UserPoolId",
+            "AppClientIDWeb",
+            "AppClientID",
+            "IdentityPoolId"
+          ]
+        }
+      ]
+    },
     "test2Auth": {
       "service": "Cognito",
       "providerPlugin": "awscloudformation",
@@ -54,7 +70,7 @@
           "defaultAuthentication": {
             "authenticationType": "AMAZON_COGNITO_USER_POOLS",
             "userPoolConfig": {
-              "userPoolId": "us-east-1_GHuPWcuMx"
+              "userPoolId": "authtest2Auth"
             }
           },
           "additionalAuthenticationProviders": [

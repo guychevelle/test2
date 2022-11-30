@@ -1,9 +1,9 @@
 {
   "version": "1",
   "cognitoConfig": {
-    "identityPoolName": "test2Auth_identitypool_5a8fac9c",
+    "identityPoolName": "test2Auth_identitypool_578b0850",
     "allowUnauthenticatedIdentities": true,
-    "resourceNameTruncated": "test25a8fac9c",
+    "resourceNameTruncated": "test2578b0850",
     "userPoolName": "test2pool",
     "autoVerifiedAttributes": [
       "email"
@@ -28,7 +28,7 @@
     ],
     "aliasAttributes": [],
     "userpoolClientGenerateSecret": false,
-    "userpoolClientRefreshTokenValidity": 30,
+    "userpoolClientRefreshTokenValidity": 1,
     "userpoolClientWriteAttributes": [
       "email",
       "name",
@@ -39,19 +39,22 @@
       "name",
       "picture"
     ],
-    "userpoolClientLambdaRole": "test2A5a8fac9c_userpoolclient_lambda_role",
+    "userpoolClientLambdaRole": "test2A578b0850_userpoolclient_lambda_role",
     "userpoolClientSetAttributes": false,
-    "sharedId": "5a8fac9c",
+    "sharedId": "578b0850",
     "resourceName": "test2Auth",
     "authSelections": "identityPoolAndUserPool",
     "serviceName": "Cognito",
     "useDefault": "manual",
-    "userPoolGroups": false,
-    "userPoolGroupList": [],
+    "userPoolGroups": true,
+    "userPoolGroupList": [
+      "authors",
+      "admins"
+    ],
     "adminQueries": false,
     "thirdPartyAuth": false,
     "authProviders": [],
     "usernameCaseSensitive": false,
     "useEnabledMfas": true
   }
-}
+} 

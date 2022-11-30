@@ -24,6 +24,19 @@ const todoquery = /* GraphQL */ `
     }
   }`;
 
+const todocondquery = /* GraphQL */ `
+  query LIST_TODOS($filter: ModelTodoFilterInput!) {
+    listTodos (filter: $filter) {
+      items {
+        id
+        name
+        description
+        _version
+        _deleted
+      }
+    }
+  }`;
+
 const todocreate = /* GraphQL */ `
   mutation CREATE_TODO($input: CreateTodoInput!) {
     createTodo(input: $input) {
@@ -76,8 +89,21 @@ export const handler = async (event) => {
   let query;
 
   if (event.httpMethod == 'GET') {
-    variables = {};
-    query = todoquery;
+    if (event.queryStringParameters) {
+      //  so far just expect 'name' parameter and run contains filter
+      variables = {
+        filter: {
+          name: {
+            contains: event.queryStringParameters.name
+          }
+        }
+      }
+      query = todocondquery;
+    } else {
+      // no parameters specified, query all
+      variables = {};
+      query = todoquery;
+    }
   } else if (event.httpMethod == 'PUT') {
     // update item
     // id and _version are needed to specify an item for update

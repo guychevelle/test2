@@ -1,5 +1,9 @@
 export type AmplifyDependentResourcesAttributes = {
     "auth": {
+        "userPoolGroups": {
+            "authorsGroupRole": "string",
+            "adminsGroupRole": "string"
+        },
         "test2Auth": {
             "IdentityPoolId": "string",
             "IdentityPoolName": "string",

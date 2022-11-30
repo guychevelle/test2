@@ -7,6 +7,7 @@
       "userPoolName": "RESOURCEpool",
       "requiredSignupAttributes": ["EMAIL", "NAME"],
       "signinMethod": "USERNAME",
+      "refreshTokenPeriod": 1,
       "passwordPolicy": {
         "minimumlength": 8,
         "additionalConstraints": ["REQUIRE_UPPERCASE", "REQUIRE_DIGIT"]

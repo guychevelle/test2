@@ -112,6 +112,16 @@ https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
       return;
     }
 
+    //  even if user is signed in, it is recommended to call
+    //  Auth.currentSession() to make sure the user token is
+    //  refreshed and valid.
+
+    //  see what cognito info Auth.currentSession() returns as
+    //  there may be a need to change Authorization in requestData
+    //  below.
+
+    const usersession = Auth.currentSession();
+    console.log('usersession', usersession);
     console.log('user', user);
 
     updateToDoTable(null);
@@ -121,9 +131,34 @@ https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
             Authorization: user.signInUserSession.idToken.jwtToken
         },
         response: true,
+        //queryStringParameters: {
+        //  name: 'click data',
+        //  description: 'create rest request to lambda'
+        //}
+    }
+    const data = await API.get('todoApi', '/items', requestData)
+                       .then((response) => {
+                         buildTable(response.data.data.listTodos.items);
+                       })
+                       .catch((error) => {
+                         console.log('api.get error', error);
+                         updateToDoTable('Error with query: ' + error.response.data.errors[0].message);
+                       })
+  }
+
+  async function getFilteredApi(event) {
+    //  prevent page from refreshing
+    event.preventDefault();
+
+    console.log('running filtered get');
+
+    const requestData = {
+        headers: {
+            Authorization: user.signInUserSession.idToken.jwtToken
+        },
+        response: true,
         queryStringParameters: {
-          name: 'click data',
-          description: 'create rest request to lambda'
+          name: event.target[0].value
         }
     }
     const data = await API.get('todoApi', '/items', requestData)
@@ -249,6 +284,13 @@ https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
       <p />
       <div>
         <button onClick={getApi}>Query ToDo</button>
+        <form onSubmit={getFilteredApi}>
+          <label>Name Contains:
+            <input type="text" name="name" />
+          </label>
+          <br />
+          <input type="submit" value="Query By Name" />
+        </form>
         <p />
         {todotable ? todotable
                    : 'No data available'

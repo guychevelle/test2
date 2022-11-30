@@ -13,9 +13,7 @@
           "delete"
         ],
         "guest": [
-          "create",
-          "read",
-          "update"
+          "read"
         ]
       }
     }

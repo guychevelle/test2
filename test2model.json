@@ -6,7 +6,7 @@
     "transformSchema": "MODELTEXT",
     "defaultAuthType": {
       "mode": "AMAZON_COGNITO_USER_POOLS",
-      "cognitoUserPoolId": "us-east-1_GHuPWcuMx"
+      "cognitoUserPoolId": "us-east-1_HcheywBBi"
     },
     "additionalAuthTypes": [
       {
@@ -15,7 +15,7 @@
     ],
     "conflictResolution": {
       "defaultResolutionStrategy": {
-        "type": "AUTOMERGE"
+        "type": "OPTIMISTIC_CONCURRENCY"
       }
     }
   }
