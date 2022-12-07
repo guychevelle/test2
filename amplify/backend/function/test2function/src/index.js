@@ -2,7 +2,7 @@ import crypto from '@aws-crypto/sha256-js';
 import { defaultProvider } from '@aws-sdk/credential-provider-node';
 import { SignatureV4 } from '@aws-sdk/signature-v4';
 import { HttpRequest } from '@aws-sdk/protocol-http';
-//import { default as fetch, Request } from 'node-fetch';
+//import { default as fetch } from 'node-fetch';
 import { Request } from 'node-fetch';
 
 const { default: fetch } = await import('node-fetch');
@@ -147,6 +147,7 @@ export const handler = async (event) => {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      Authorization: event.headers.Authorization,
       host: endpoint.host
     },
     hostname: endpoint.host,
@@ -170,7 +171,7 @@ export const handler = async (event) => {
     body = {
       errors: [
         {
-          status: response.status,
+          //status: response.status,
           message: error.message,
           stack: error.stack
         }

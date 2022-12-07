@@ -7,6 +7,9 @@ import './App.css';
 import { API } from 'aws-amplify';
 import { Storage } from 'aws-amplify';
 
+import * as queries from './graphql/queries';
+import * as mutations from './graphql/mutations';
+
 import awsconfig from './aws-exports';
 
 function App() {
@@ -20,7 +23,11 @@ function App() {
   const [user, updateUser] = useState(null);
   const [authactioncount, updateAuthActionCount] = useState(0);
 
+  const authmode = user ? "AMAZON_COGNITO_USER_POOLS" :
+                          "AWS_IAM";
+
   useEffect(() => {
+    console.log('running useEffect');
     checkUser();
     setAuthListener();
   }, [authactioncount]);
@@ -40,7 +47,8 @@ function App() {
     Hub.listen('auth', (data) => {
       switch (data.payload.event) {
         case 'signIn':
-          updateUser(data.payload.data);
+          //updateUser(data.payload.data);
+          checkUser();
           updateAuthActionCount(authactioncount+1);
           break;
         case 'signOut':
@@ -72,6 +80,50 @@ function App() {
     });
   }
 
+  function setTodos(data) {
+    console.log('set Todo data', data);
+    //updateTodo(data.listTodos.items.filter(function (a) {
+    //                                       return !a._deleted}));
+    buildTable(data.listTodos.items);
+  }
+
+  function handleGetTodoError(error) {
+    console.log('handleGetTodoError', error);
+    if (error.data)
+      console.log('data available', error.data);
+  }
+ 
+  async function queryGraphql() {
+    updateToDoTable(null);
+    const allTodos = await API.graphql({ query: queries.listTodos,
+                                         authMode: authmode })
+                     .then((response) => setTodos(response.data))
+                     .catch((error) => handleGetTodoError(error));
+  }
+
+  function handleCreateTodoError(error) {
+    console.log('handlecreatetotoerror', error);
+    if (error.data) {
+      updateCreateMessage('Error creating ToDo: ' + error.errors[0].message);
+    }
+    else
+      updateCreateMessage('Error creating ToDo: ' + error.message);
+  }
+
+  async function createGraphql(event) {
+    //  prevent page from refreshing
+    event.preventDefault();
+    console.log('createGraphql event', event);
+    const tododata = {
+      name: event.target[0].value,
+      description: event.target[1].value
+    }
+
+    const createdata = await API.graphql({ query: mutations.createTodo,
+                                           variables: { input: tododata }})
+                       .then((response) => console.log('created todo', response))
+                       .catch((error) => handleCreateTodoError(error));
+  }
 
   function buildTable(items) {
     updateToDoTable(
@@ -107,10 +159,12 @@ invoke url from api gateway configuration:
 https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
 */
   async function getApi() {
-    if (!user) {
-      updateToDoTable('Must be signed in to query');
-      return;
-    }
+    //if (!user) {
+    //  updateToDoTable('Must be signed in to query');
+    //  return;
+    //}
+
+    updateToDoTable(null);
 
     //  even if user is signed in, it is recommended to call
     //  Auth.currentSession() to make sure the user token is
@@ -120,22 +174,32 @@ https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
     //  there may be a need to change Authorization in requestData
     //  below.
 
-    const usersession = Auth.currentSession();
-    console.log('usersession', usersession);
-    console.log('user', user);
+    let requestData = {};
 
-    updateToDoTable(null);
+    if (user) {
+      const usersession = Auth.currentSession();
+      console.log('usersession', usersession);
+      console.log('user', user);
 
-    const requestData = {
+      requestData = {
         headers: {
-            Authorization: user.signInUserSession.idToken.jwtToken
+            //Authorization: user.signInUserSession.idToken.jwtToken
+            Authorization: user.signInUserSession.accessToken.jwtToken
         },
         response: true,
         //queryStringParameters: {
         //  name: 'click data',
         //  description: 'create rest request to lambda'
         //}
+      }
+    } else {
+      console.log('unauthenticated user');
+      requestData = {
+        headers: {},
+        response: true
+      }
     }
+
     const data = await API.get('todoApi', '/items', requestData)
                        .then((response) => {
                          buildTable(response.data.data.listTodos.items);
@@ -154,7 +218,8 @@ https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
 
     const requestData = {
         headers: {
-            Authorization: user.signInUserSession.idToken.jwtToken
+            //Authorization: user.signInUserSession.idToken.jwtToken
+            Authorization: user.signInUserSession.accessToken.jwtToken
         },
         response: true,
         queryStringParameters: {
@@ -181,7 +246,8 @@ https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
 
     const requestData = {
         headers: {
-            Authorization: user.signInUserSession.idToken.jwtToken
+            //Authorization: user.signInUserSession.idToken.jwtToken
+            Authorization: user.signInUserSession.accessToken.jwtToken
         },
         body: {
           name: event.target[0].value,
@@ -211,7 +277,8 @@ https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
 
     const requestData = {
         headers: {
-            Authorization: user.signInUserSession.idToken.jwtToken
+            //Authorization: user.signInUserSession.idToken.jwtToken
+            Authorization: user.signInUserSession.accessToken.jwtToken
         },
         body: {
           id: event.target[0].value,
@@ -244,7 +311,8 @@ https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
 
     const requestData = {
         headers: {
-            Authorization: user.signInUserSession.idToken.jwtToken
+            //Authorization: user.signInUserSession.idToken.jwtToken
+            Authorization: user.signInUserSession.accessToken.jwtToken
         },
         body: {
           id: event.target[0].value,
@@ -283,13 +351,15 @@ https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
       </div>
       <p />
       <div>
-        <button onClick={getApi}>Query ToDo</button>
+        <button onClick={queryGraphql}>Client Query ToDo</button>
+        <p />
+        <button onClick={getApi}>Lambda Query ToDo</button>
         <form onSubmit={getFilteredApi}>
           <label>Name Contains:
             <input type="text" name="name" />
           </label>
           <br />
-          <input type="submit" value="Query By Name" />
+          <input type="submit" value="Lambda Query By Name" />
         </form>
         <p />
         {todotable ? todotable
@@ -308,7 +378,25 @@ https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
             <input type="text" name="description" size="50" />
           </label>
           <br />
-          <input type="submit" value="Create ToDo" />
+          <input type="submit" value="Lambda Create ToDo" />
+        </form>
+        <p />
+        {createmessage}
+        <hr />
+      </div>
+      <p />
+      <div>
+        <hr />
+        <form onSubmit={createGraphql}>
+          <label>Name:
+            <input type="text" name="name" />
+          </label>
+          <br />
+          <label>Description:
+            <input type="text" name="description" size="50" />
+          </label>
+          <br />
+          <input type="submit" value="Client Create ToDo" />
         </form>
         <p />
         {createmessage}
@@ -335,7 +423,7 @@ https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
             <input type="text" name="newdesc" size="50" />
           </label>
           <br />
-          <input type="submit" value="Update ToDo" />
+          <input type="submit" value="Lambda Update ToDo" />
         </form>
         <p />
         {updatemessage}
@@ -354,7 +442,7 @@ https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
             <input type="number" name="version" />
           </label>
           <br />
-          <input type="submit" value="Delete ToDo" />
+          <input type="submit" value="Lambda Delete ToDo" />
         </form>
         <p />
         {deletemessage}
