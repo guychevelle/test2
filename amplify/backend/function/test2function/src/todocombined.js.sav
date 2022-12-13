@@ -70,7 +70,7 @@ const tododelete = /* GraphQL */ `
 export const handler = async (event) => {
   console.log(`EVENT: ${JSON.stringify(event)}`);
 
-  if (event.headers && event.headers.dbauthorization)
+  if (event.headers.dbauthorization)
     console.log('DBAUTH: ', event.headers.dbauthorization);
 
   // from https://medium.com/rahasak/build-serverless-application-with-aws-amplify-aws-api-gateway-aws-lambda-and-cognito-auth-a8606b9cb025 
@@ -148,7 +148,7 @@ export const handler = async (event) => {
     
   let request;
 
-  if (event.headers && event.headers.dbauthorization) {
+  if (event.headers.dbauthorization) {
     /*
     const requestToBeSigned = new HttpRequest({
       method: 'POST',
@@ -176,6 +176,7 @@ export const handler = async (event) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        Authorization: event.headers.Authorization,
         host: endpoint.host
       },
       hostname: endpoint.host,

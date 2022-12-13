@@ -33,6 +33,13 @@ function App() {
   }, [authactioncount]);
 
   async function checkUser() {
+    const sess = await Auth.currentSession()
+                 .then((response) => {
+                   console.log('sess response', response);
+                 })
+                 .catch((error) => {
+                   console.log('sess error', error);
+                 });
     const usr = await Auth.currentAuthenticatedUser()
                 .then((response) => {
                   updateUser(response);
@@ -89,8 +96,13 @@ function App() {
 
   function handleGetTodoError(error) {
     console.log('handleGetTodoError', error);
-    if (error.data)
+    if (error.data) {
       console.log('data available', error.data);
+      updateToDoTable('Unable to query: ' + error.errors[0].message)
+    }
+    else {
+      updateToDoTable('Unable to query: ' + error.message);
+    }
   }
  
   async function queryGraphql() {
@@ -158,11 +170,8 @@ function App() {
 invoke url from api gateway configuration:
 https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
 */
-  async function getApi() {
-    //if (!user) {
-    //  updateToDoTable('Must be signed in to query');
-    //  return;
-    //}
+  async function getApi(event) {
+    console.log('lambda query event', event);
 
     updateToDoTable(null);
 
@@ -183,16 +192,22 @@ https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
 
       requestData = {
         headers: {
-            //Authorization: user.signInUserSession.idToken.jwtToken
-            Authorization: user.signInUserSession.accessToken.jwtToken
+            // use idToken under Authorization to get through the
+            // API Gateway. Inside the Lambda, use accessToken under
+            // DBAuthorization (can use any name for the header attribute)
+            // for table access; the accessToken will carry needed info to
+            // enforce table auth rules
+            Authorization: user.signInUserSession.idToken.jwtToken,
+            DBAuthorization: user.signInUserSession.accessToken.jwtToken
         },
-        response: true,
+        response: true
         //queryStringParameters: {
-        //  name: 'click data',
-        //  description: 'create rest request to lambda'
+        //  name: 'ham'
         //}
       }
     } else {
+      // unauthenticated users are allowed through AWS_IAM
+      // configuration of the API Gateway and Dynamo table
       console.log('unauthenticated user');
       requestData = {
         headers: {},
@@ -200,13 +215,17 @@ https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
       }
     }
 
-    const data = await API.get('todoApi', '/items', requestData)
+    // an additional path is setup in the API Gateway that allows
+    // unauthenticated users to query
+    const path = user ? '/items' : '/items/guests';
+ 
+    const data = await API.get('todoApi', path, requestData)
                        .then((response) => {
                          buildTable(response.data.data.listTodos.items);
                        })
                        .catch((error) => {
                          console.log('api.get error', error);
-                         updateToDoTable('Error with query: ' + error.response.data.errors[0].message);
+                         updateToDoTable('Error with query: ' + error.message);
                        })
   }
 
@@ -214,25 +233,46 @@ https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
     //  prevent page from refreshing
     event.preventDefault();
 
-    console.log('running filtered get');
+    updateToDoTable(null);
+    let requestData = {};
 
-    const requestData = {
+    if (user) {
+      const usersession = Auth.currentSession();
+      console.log('usersession', usersession);
+
+      requestData = {
         headers: {
-            //Authorization: user.signInUserSession.idToken.jwtToken
-            Authorization: user.signInUserSession.accessToken.jwtToken
+          Authorization: user.signInUserSession.idToken.jwtToken,
+          DBAuthorization: user.signInUserSession.accessToken.jwtToken
         },
         response: true,
         queryStringParameters: {
           name: event.target[0].value
         }
+      }
+    } else {
+      // unauthenticated users are allowed to query
+      requestData = {
+        headers: {},
+        response: true,
+        queryStringParameters: {
+          name: event.target[0].value
+        }
+      }
     }
-    const data = await API.get('todoApi', '/items', requestData)
+
+    // an additional path is setup in the API Gateway that allows
+    // unauthenticated users to query
+    const path = user ? '/items' : '/items/guests';
+    console.log('path', path);
+ 
+    const data = await API.get('todoApi', path, requestData)
                        .then((response) => {
                          buildTable(response.data.data.listTodos.items);
                        })
                        .catch((error) => {
                          console.log('api.get error', error);
-                         updateToDoTable('Error with query: ' + error.response.data.errors[0].message);
+                         updateToDoTable('Error with query: ' + error.message);
                        })
   }
 
@@ -246,8 +286,8 @@ https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
 
     const requestData = {
         headers: {
-            //Authorization: user.signInUserSession.idToken.jwtToken
-            Authorization: user.signInUserSession.accessToken.jwtToken
+            Authorization: user.signInUserSession.idToken.jwtToken,
+            DBAuthorization: user.signInUserSession.accessToken.jwtToken
         },
         body: {
           name: event.target[0].value,
@@ -277,8 +317,8 @@ https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
 
     const requestData = {
         headers: {
-            //Authorization: user.signInUserSession.idToken.jwtToken
-            Authorization: user.signInUserSession.accessToken.jwtToken
+            Authorization: user.signInUserSession.idToken.jwtToken,
+            DBAuthorization: user.signInUserSession.accessToken.jwtToken
         },
         body: {
           id: event.target[0].value,
@@ -311,8 +351,8 @@ https://k2dao4cir9.execute-api.us-east-1.amazonaws.com/test
 
     const requestData = {
         headers: {
-            //Authorization: user.signInUserSession.idToken.jwtToken
-            Authorization: user.signInUserSession.accessToken.jwtToken
+            Authorization: user.signInUserSession.idToken.jwtToken,
+            DBAuthorization: user.signInUserSession.accessToken.jwtToken
         },
         body: {
           id: event.target[0].value,

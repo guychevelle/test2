@@ -70,6 +70,9 @@ const tododelete = /* GraphQL */ `
 export const handler = async (event) => {
   console.log(`EVENT: ${JSON.stringify(event)}`);
 
+  if (event.headers && event.headers.dbauthorization)
+    console.log('DBAUTH: ', event.headers.dbauthorization);
+
   // from https://medium.com/rahasak/build-serverless-application-with-aws-amplify-aws-api-gateway-aws-lambda-and-cognito-auth-a8606b9cb025 
   // Step 9, enable CORS
   if (event.requestContext.authorizer) {
@@ -143,20 +146,45 @@ export const handler = async (event) => {
     console.log('unsupported method');
   }
     
-  const requestToBeSigned = new HttpRequest({
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: event.headers.Authorization,
-      host: endpoint.host
-    },
-    hostname: endpoint.host,
-    body: JSON.stringify({ query, variables }),
-    path: endpoint.pathname
-  });
+  let request;
 
-  const signed = await signer.sign(requestToBeSigned);
-  const request = new Request(endpoint, signed);
+  if (event.headers && event.headers.dbauthorization) {
+    /*
+    const requestToBeSigned = new HttpRequest({
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: event.headers.dbauthorization,
+        host: endpoint.host
+      },
+      hostname: endpoint.host,
+      body: JSON.stringify({ query, variables }),
+      path: endpoint.pathname
+    }); 
+    */
+    const options = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: event.headers.dbauthorization
+      },
+      body: JSON.stringify({ query, variables })
+    };
+    request = new Request(GRAPHQL_ENDPOINT, options);
+  } else {
+    const requestToBeSigned = new HttpRequest({
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        host: endpoint.host
+      },
+      hostname: endpoint.host,
+      body: JSON.stringify({ query, variables }),
+      path: endpoint.pathname
+    }); 
+    const signed = await signer.sign(requestToBeSigned);
+    request = new Request(endpoint, signed);
+  }
 
   let statusCode = 200;
   let body;
