@@ -43,6 +43,10 @@ const todocreate = /* GraphQL */ `
       id
       name
       description
+      createdAt
+      updatedAt
+      _version
+      _lastChangedAt
     }
   }`;
 
@@ -53,6 +57,10 @@ const todoupdate = /* GraphQL */ `
       _version
       name
       description
+      createdAt
+      updatedAt
+      _version
+      _lastChangedAt
     }
   }`;
 
@@ -60,7 +68,12 @@ const tododelete = /* GraphQL */ `
   mutation DELETE_TODO($input: DeleteTodoInput!) {
     deleteTodo(input: $input) {
       id
+      name
+      description
+      createdAt
+      updatedAt
       _version
+      _lastChangedAt
     }
   }`;
 

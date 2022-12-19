@@ -21,7 +21,7 @@
       "function": {
         "test2function": {
           "deploymentBucketName": "amplify-test2-test-151131-deployment",
-          "s3Key": "amplify-builds/test2function-374e3961645732465233-build.zip"
+          "s3Key": "amplify-builds/test2function-327864633236567a6e53-build.zip"
         }
       }
     }

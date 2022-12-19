@@ -7,6 +7,10 @@ import './App.css';
 import { API } from 'aws-amplify';
 import { Storage } from 'aws-amplify';
 
+//  imports for subscriptions
+import { graphqlOperation } from 'aws-amplify';
+import * as subscriptions from './graphql/subscriptions';
+
 import * as queries from './graphql/queries';
 import * as mutations from './graphql/mutations';
 
@@ -49,6 +53,49 @@ function App() {
                   updateUser(null);
                 });
   }
+
+  // subscription related hooks
+  // create subscription
+  useEffect(() => {
+    const createsub = API.graphql(
+      graphqlOperation(subscriptions.onCreateTodo)
+      ).subscribe({
+        next: ({ provider, value }) => console.log({ provider, value }),
+        error: (error) => console.warn(error)
+      });
+
+    // to avoid multiple subscription connections and responses when 
+    // an item is created, unsubscribe as below
+    return () => createsub.unsubscribe();
+  }, []);
+
+  // update subscription
+  useEffect(() => {
+    const updatesub = API.graphql(
+      graphqlOperation(subscriptions.onUpdateTodo)
+      ).subscribe({
+        next: ({ provider, value }) => console.log({ provider, value }),
+        error: (error) => console.warn(error)
+      });
+
+    // to avoid multiple subscription connections and responses when 
+    // an item is created, unsubscribe as below
+    return () => updatesub.unsubscribe();
+  }, []);
+
+  // delete subscription
+  useEffect(() => {
+    const deletesub = API.graphql(
+      graphqlOperation(subscriptions.onDeleteTodo)
+      ).subscribe({
+        next: ({ provider, value }) => console.log({ provider, value }),
+        error: (error) => console.warn(error)
+      });
+
+    // to avoid multiple subscription connections and responses when 
+    // an item is created, unsubscribe as below
+    return () => deletesub.unsubscribe();
+  }, []);
 
   async function setAuthListener() {
     Hub.listen('auth', (data) => {
